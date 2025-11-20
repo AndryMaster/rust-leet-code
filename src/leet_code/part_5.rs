@@ -1,4 +1,5 @@
 ﻿use std::cmp::max;
+use std::collections::HashMap;
 use itertools::Itertools;
 
 mod s421;
@@ -111,6 +112,46 @@ pub fn combination_sum2(mut candidates: Vec<i32>, target: i32) -> Vec<Vec<i32>> 
     backtrack(candidates, target)
 }
 
+/// 2044. Count Number of Maximum Bitwise-OR Subsets <br>
+/// https://leetcode.com/problems/count-number-of-maximum-bitwise-or-subsets/
+pub fn count_max_or_subsets(mut nums: Vec<i32>) -> i32 {
+    let max_or = nums.iter().fold(0, |acc, x| acc | x);
+    let count_subsets = nums.into_iter().powerset().map(|subset| (max_or == subset.into_iter().fold(0, |acc, x| acc | x)) as i32).sum();
+    return count_subsets;
+}
+
+/// 1863. Sum of All Subset XOR Totals <br>
+/// https://leetcode.com/problems/sum-of-all-subset-xor-totals/
+pub fn subset_xor_sum(nums: Vec<i32>) -> i32 {
+    nums.into_iter().powerset().map(|set| set.into_iter().fold(0, |acc, x| acc^x)).sum()
+}
+
+/// 17. Letter Combinations of a Phone Number <br>
+/// https://leetcode.com/problems/letter-combinations-of-a-phone-number/
+pub fn letter_combinations(digits: String) -> Vec<String> {
+    let map: HashMap<char, &str> = vec![
+        ('2', "abc"), ('3', "def"),
+        ('4', "ghi"), ('5', "jkl"), ('6', "mno"),
+        ('7', "pqrs"), ('8', "tuv"), ('9', "wxyz")]
+        .into_iter().collect();
+
+    let mut result: Vec<String> = vec!["".to_string()];
+    for num in digits.chars() {
+        let new_chars = map.get(&num).unwrap();
+
+        let mut tmp: Vec<String> = vec![];
+        for str in result.iter() {
+            for ch in new_chars.chars() {
+                tmp.push(format!("{}{}", str, ch));
+            }
+        }
+
+        result = tmp;
+    }
+
+    result
+}
+
 
 
 #[cfg(test)]
@@ -146,5 +187,26 @@ mod tests {
     fn test_combination_sum2() {
         assert_eq!(combination_sum2(vec![10,1,2,7,6,1,5], 8), vec![vec![6,1,1],vec![5,2,1],vec![7,1],vec![6,2]]);
         assert_eq!(combination_sum2(vec![2,5,2,1,2], 5), vec![vec![2,2,1],vec![5]]);
+    }
+
+    #[test]
+    fn test_count_max_or_subsets() {
+        assert_eq!(count_max_or_subsets(vec![3,1]), 2);
+        assert_eq!(count_max_or_subsets(vec![2,2,2]), 7);
+        assert_eq!(count_max_or_subsets(vec![3,2,1,5]), 6);
+        assert_eq!(count_max_or_subsets(vec![]), 1);
+    }
+
+    #[test]
+    fn test_subset_xor_sum() {
+        assert_eq!(subset_xor_sum(vec![1,3]), 6);
+        assert_eq!(subset_xor_sum(vec![5,1,6]), 28);
+        assert_eq!(subset_xor_sum(vec![3,4,5,6,7,8]), 480);
+    }
+
+    #[test]
+    fn test_letter_combinations() {
+        assert_eq!(letter_combinations(String::from("23")), ["ad","ae","af","bd","be","bf","cd","ce","cf"]);
+        assert_eq!(letter_combinations(String::from("2")), ["a","b","c"]);
     }
 }
