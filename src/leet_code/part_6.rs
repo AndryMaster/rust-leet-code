@@ -1,5 +1,8 @@
 ﻿use itertools::Itertools;
 
+mod s2166;
+use s2166::Bitset;
+
 
 
 /// 22. Generate Parentheses <br>
@@ -12,15 +15,15 @@ pub fn generate_parenthesis(n: i32) -> Vec<String> {
 
         let mut result = vec![];
         if opened < need {
-            result.extend(generate_parenthesis(s.clone()+"(", opened+1, need-1));
+            result.extend(generate_parenthesis(s.clone() + "(", opened + 1, need - 1));
         }
         if opened > 0 {
-            result.extend(generate_parenthesis(s+")", opened-1, need-1));
+            result.extend(generate_parenthesis(s + ")", opened - 1, need - 1));
         }
         result
     }
 
-    generate_parenthesis(String::new(), 0, n*2)
+    generate_parenthesis(String::new(), 0, n * 2)
 }
 
 /// 216. Combination Sum III <br>
@@ -30,7 +33,8 @@ pub fn combination_sum3(k: i32, n: i32) -> Vec<Vec<i32>> {
         if k == 0 {
             if n == 0 {
                 return vec![state];
-            }   return vec![];
+            }
+            return vec![];
         }
 
         let mut states = vec![];
@@ -40,7 +44,7 @@ pub fn combination_sum3(k: i32, n: i32) -> Vec<Vec<i32>> {
         for i in 1..=9 {
             if last < i && i <= n {
                 state.push(i);
-                states.extend(combination_sum3(k-1, n-i, state.clone()));
+                states.extend(combination_sum3(k - 1, n - i, state.clone()));
                 state.pop();
             }
         }
@@ -77,23 +81,6 @@ pub fn max_length(arr: Vec<String>) -> i32 {
         Some(res)
     }
 
-
-    // let arr: Vec<u32> = arr
-    //     .iter()
-    //     .map(|s| str_as_set(s))
-    //     .filter(|n| n.is_some())
-    //     .map(|n| n.unwrap())
-    //     .collect();
-    //
-    // let res = arr
-    //     .iter().powerset()
-    //     .map(|set| { union_sets(set)})
-    //     .filter(|set| set.is_some())
-    //     .map(|set| set.unwrap().count_ones())
-    //     .max().unwrap_or(0);
-    //
-    // return res as i32
-
     return arr
         .iter()
         .map(|str| str_as_set(str))
@@ -104,7 +91,31 @@ pub fn max_length(arr: Vec<String>) -> i32 {
         .filter(|set| set.is_some())
         .map(|set| set.unwrap())
         .map(|set| set.count_ones())
-        .max().unwrap_or(0) as i32;
+        .max()
+        .unwrap_or(0) as i32;
+}
+
+/// 797. All Paths From Source to Target <br>
+/// https://leetcode.com/problems/all-paths-from-source-to-target/
+pub fn all_paths_source_target(graph: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    fn get_all_paths(graph: &Vec<Vec<i32>>, path: Vec<i32>) -> Vec<Vec<i32>> {
+        let target = (graph.len() - 1) as i32;
+        let pos = *path.last().unwrap();
+
+        if pos == target {
+            return vec![path];
+        }
+
+        let mut paths = vec![];
+        for &a in graph[pos as usize].iter() {
+            let mut new_path = path.clone();
+            new_path.push(a);
+            paths.extend(get_all_paths(graph, new_path));
+        }
+        return paths;
+    }
+
+    return get_all_paths(&graph, vec![0]);
 }
 
 
@@ -122,8 +133,8 @@ mod tests {
     #[test]
     fn test_combination_sum3() {
         let empty: Vec<Vec<i32>> = vec![];
-        assert_eq!(combination_sum3(3, 7), [[1,2,4]]);
-        assert_eq!(combination_sum3(3, 9), [[1,2,6],[1,3,5],[2,3,4]]);
+        assert_eq!(combination_sum3(3, 7), [[1, 2, 4]]);
+        assert_eq!(combination_sum3(3, 9), [[1, 2, 6], [1, 3, 5], [2, 3, 4]]);
         assert_eq!(combination_sum3(2, 18), empty);
     }
 
@@ -134,5 +145,34 @@ mod tests {
         assert_eq!(max_length(Vec::from(["abcdefghijklmnopqrstuvwxyz".to_string()])), 26);
         assert_eq!(max_length(Vec::from(["aa".to_string(),"bb".to_string()])), 0);
         assert_eq!(max_length(Vec::from(["a".to_string(),"b".to_string(),"c".to_string()])), 3);
+    }
+
+    #[test]
+    fn test_all_paths_source_target() {
+        assert_eq!(all_paths_source_target(vec![vec![1,2],vec![3],vec![3],vec![]]),
+                   vec![vec![0,1,3],vec![0,2,3]]);
+        assert_eq!(all_paths_source_target(vec![vec![4,3,1],vec![3,2,4],vec![3],vec![4],vec![]]),
+                   vec![vec![0,4],vec![0,3,4],vec![0,1,3,4],vec![0,1,2,3,4],vec![0,1,4]]);
+    }
+
+    #[test]
+    fn test_bitset() {
+        let mut bs = Bitset::new(5);              // bitset = "00000".
+        bs.fix(3);                                   // the value at idx = 3 is updated to 1, so bitset = "00010".
+        // println!("{}", bs.to_string());
+        bs.fix(1);                                   // the value at idx = 1 is updated to 1, so bitset = "01010".
+        // println!("{}", bs.to_string());
+        bs.flip();                                       // the value of each bit is flipped, so bitset = "10101".
+        // println!("{}", bs.to_string());
+        assert_eq!(bs.all(), false);                     // return False, as not all values of the bitset are 1.
+        bs.unfix(0);                                 // the value at idx = 0 is updated to 0, so bitset = "00101".
+        // println!("{}", bs.to_string());
+        bs.flip();                                       // the value of each bit is flipped, so bitset = "11010".
+        // println!("{}", bs.to_string());
+        assert_eq!(bs.one(), true);                      // return True, as there is at least 1 index with value 1.
+        bs.unfix(0);                                 // the value at idx = 0 is updated to 0, so bitset = "01010".
+        // println!("{}", bs.to_string());
+        assert_eq!(bs.count(), 2);                       // return 2, as there are 2 bits with value 1.
+        assert_eq!(bs.to_string(), "01010".to_string()); // return "01010", which is the composition of bitset.
     }
 }
