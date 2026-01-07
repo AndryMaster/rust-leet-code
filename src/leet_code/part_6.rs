@@ -1,4 +1,5 @@
-﻿use itertools::Itertools;
+﻿use std::cmp::{max, min};
+use itertools::Itertools;
 
 mod s2166;
 use s2166::Bitset;
@@ -118,6 +119,115 @@ pub fn all_paths_source_target(graph: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
     return get_all_paths(&graph, vec![0]);
 }
 
+/// 6. Zigzag Conversion <br>
+/// https://leetcode.com/problems/zigzag-conversion/
+pub fn convert(s: String, num_rows: i32) -> String {
+    if num_rows <= 1 {
+        return s;
+    }
+
+    let mut res = String::with_capacity(s.len());
+    let mut rows = vec![vec![]; num_rows as usize];
+
+    let delta = (num_rows - 1) * 2;
+    for i in 0..delta {
+        rows[min(i, (delta - i)) as usize].push(i)
+    }
+
+    for row in rows.iter() {
+        let mut step = 0;
+        'row: loop {
+            for idx in row {
+                let pos = (step * delta + idx) as usize;
+                if pos >= s.len() {
+                    break 'row;
+                }
+                res.push(s.chars().nth(pos).unwrap());
+            }
+            step += 1;
+        }
+    }
+
+    res
+}
+
+/// 397. Integer Replacement <br>
+/// https://leetcode.com/problems/integer-replacement/
+pub fn integer_replacement(mut n: i32) -> i32 {
+    if n == i32::MAX {
+        return 32;
+    }
+    let mut cnt = 0;
+    while n > 1 {
+        if n % 2 == 0 {
+            n /= 2;
+        }
+        else if n != 3 && n.trailing_ones() >= 2 {
+            n += 1;
+        }
+        else {
+            n -= 1;
+        }
+
+        cnt += 1;
+        // dbg!(format!("{n:0b} - {cnt} - {n}"));
+    }
+    cnt
+}
+
+/// 91. Decode Ways <br>
+/// https://leetcode.com/problems/decode-ways/
+pub fn num_decodings(s: String) -> i32 {
+    let mut dp = vec![0; s.len() + 1];
+    dp[0] = 1;
+
+    let mut last_num = ' ';
+
+    for (i, num) in s.chars().enumerate().map(|(i, c)| (i + 1, c)) {
+        if ('1'..='9').contains(&num) {
+            dp[i] += dp[i-1];
+        }
+        if i > 1 && (last_num == '1' || last_num == '2' && ('0'..='6').contains(&num)) {
+            dp[i] += dp[i-2];
+        }
+        last_num = num;
+    }
+
+    // match num {
+    //     '1'..='9' => dp[i] += dp[i-1],
+    //     _ => (),
+    // }
+    // match last {
+    //     '1' => dp[i] += dp[i-2],
+    //     '2' if ('0'..='6').contains(&num) => dp[i] += dp[i-2],
+    //     _ => (),
+    // }
+
+    // dbg!(s, &dp);
+    return *dp.last().unwrap();
+}
+
+/// 396. Rotate Function <br>
+/// https://leetcode.com/problems/rotate-function/
+pub fn max_rotate_function(nums: Vec<i32>) -> i32 {
+    if nums.is_empty() {
+        return 0;
+    }
+
+    let n = nums.len() as i32;
+    let sum_nums = nums.iter().sum::<i32>();
+
+    let mut sum_cur = nums.iter().enumerate().map(|(i, &num)| num * (i as i32)).sum();
+    let mut sum_max = sum_cur;
+
+    for i in 0..(n-1) {
+        sum_cur += n * nums[i as usize] - sum_nums;
+        sum_max = max(sum_max, sum_cur);
+    }
+
+    sum_max
+}
+
 
 
 #[cfg(test)]
@@ -174,5 +284,36 @@ mod tests {
         // println!("{}", bs.to_string());
         assert_eq!(bs.count(), 2);                       // return 2, as there are 2 bits with value 1.
         assert_eq!(bs.to_string(), "01010".to_string()); // return "01010", which is the composition of bitset.
+    }
+
+    #[test]
+    fn test_convert() {
+        assert_eq!(convert(String::from("PAYPALISHIRING"), 3), String::from("PAHNAPLSIIGYIR"));
+        assert_eq!(convert(String::from("PAYPALISHIRING"), 4), String::from("PINALSIGYAHRPI"));
+        assert_eq!(convert(String::from("A"), 1), String::from("A"));
+    }
+
+    #[test]
+    fn test_integer_replacement() {
+        assert_eq!(integer_replacement(8), 3);
+        assert_eq!(integer_replacement(7), 4);
+        assert_eq!(integer_replacement(4), 2);
+        assert_eq!(integer_replacement(100000000), 31);
+        assert_eq!(integer_replacement(2147483647), 32);
+    }
+
+    #[test]
+    fn test_num_decodings() {
+        assert_eq!(num_decodings("12".to_string()), 2);
+        assert_eq!(num_decodings("226".to_string()), 3);
+        assert_eq!(num_decodings("06".to_string()), 0);
+        assert_eq!(num_decodings("11106".to_string()), 2);
+    }
+
+    #[test]
+    fn test_max_rotate_function() {
+        assert_eq!(max_rotate_function(vec![4,3,2,6,5,9,12,14,13,1,0,7,4,3,7,8,5,3,12,10,9]), 1667);
+        assert_eq!(max_rotate_function(vec![4,3,2,6]), 26);
+        assert_eq!(max_rotate_function(vec![100]), 0);
     }
 }
