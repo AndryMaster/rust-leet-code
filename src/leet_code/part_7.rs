@@ -61,15 +61,56 @@ pub fn find_disappeared_numbers(nums: Vec<i32>) -> Vec<i32> {
 /// 984. String Without AAA or BBB <br>
 /// https://leetcode.com/problems/string-without-aaa-or-bbb/
 pub fn str_without3a3b(a: i32, b: i32) -> String {
-    // жадный алгоритм где больше там аа, где меньше б
-    todo!()
+    let (a, b) = (a as usize, b as usize);
+    let mut res = String::with_capacity(a+b);
+
+    let (a_char, b_char) = if a > b { ('a', 'b') } else { ('b', 'a') };
+    let (mut a, mut b) = (max(a, b), min(a, b));
+
+    let diff = a - b;
+    for _ in 0..min(2, diff) {
+        res.push(a_char);
+        a -= 1;
+    }
+
+    let diff = a - b;
+    // res += format!("{b_char}{a_char}{a_char}").repeat(diff).as_str();
+    for _ in 0..diff {
+        res.push(b_char);
+        res.push(a_char);
+        res.push(a_char);
+    }
+
+    // a == b
+    a -= diff*2;
+    b -= diff;
+    // res += format!("{b_char}{a_char}").repeat(a).as_str();
+    for _ in 0..a {
+        res.push(b_char);
+        res.push(a_char);
+    }
+
+    // a == b == 0;
+    res
 }
 
 /// 942. DI String Match <br>
 /// https://leetcode.com/problems/di-string-match/
 pub fn di_string_match(s: String) -> Vec<i32> {
-    todo!()
+    let mut res = Vec::with_capacity(s.len()+1);
+    let (mut left, mut right) = (0, s.len() as i32);
 
+    for ch in s.chars() {
+        match ch {
+            'I' => { res.push(left); left += 1; },
+            'D' =>  { res.push(right); right -= 1; },
+            _ => panic!("Illegal character"),
+        }
+    }
+    res.push(left);
+    // debug_assert_eq!(left, right);
+
+    res
 }
 
 /// 781. Rabbits in Forest <br>
@@ -86,9 +127,55 @@ pub fn num_rabbits(answers: Vec<i32>) -> i32 {
 /// 670. Maximum Swap <br>
 /// https://leetcode.com/problems/maximum-swap/
 pub fn maximum_swap(num: i32) -> i32 {
+    let mut chars = num.to_string().chars().collect::<Vec<_>>();
+    let (mut p1, mut p2) = (0, 0);
+
+    for (pos1, ch1) in chars.iter().enumerate() {
+        let find_swap = chars.iter().enumerate().rev()
+            .filter(|(pos2, ch2)| (pos1 < *pos2) && (ch1 < ch2))
+            .map(|(pos2, ch2)| (ch2, pos2)).max();
+
+        if let Some((ch2, pos2)) = find_swap {
+            p1 = pos1;
+            p2 = pos2;
+            break;
+        }
+    }
+
+    chars.swap(p1, p2);
+    let num_result = chars.into_iter().collect::<String>().parse::<i32>().unwrap();
+    num_result
+}
+
+/// 1054. Distant Barcodes <br>
+/// https://leetcode.com/problems/distant-barcodes/
+pub fn rearrange_barcodes(barcodes: Vec<i32>) -> Vec<i32> {
     todo!()
 }
 
+/// 1029. Two City Scheduling <br>
+/// https://leetcode.com/problems/two-city-scheduling/
+pub fn two_city_sched_cost(costs: Vec<Vec<i32>>) -> i32 {
+    todo!()
+}
+
+/// 1147. Longest Chunked Palindrome Decomposition <br>
+/// https://leetcode.com/problems/longest-chunked-palindrome-decomposition/
+pub fn longest_decomposition(text: String) -> i32 {
+    todo!()
+}
+
+/// 1402. Reducing Dishes <br>
+/// https://leetcode.com/problems/reducing-dishes/
+pub fn max_satisfaction(satisfaction: Vec<i32>) -> i32 {
+    todo!()
+}
+
+/// 3723. Maximize Sum of Squares of Digits <br>
+/// https://leetcode.com/problems/maximize-sum-of-squares-of-digits/
+pub fn max_sum_of_squares(num: i32, sum: i32) -> String {
+    todo!()
+}
 
 
 #[cfg(test)]
@@ -129,26 +216,38 @@ mod tests {
         assert_eq!(find_disappeared_numbers(vec![1,1]), vec![2]);
     }
 
-    #[test] #[ignore]
+    #[test]
     fn test_str_without3a3b() {
         fn assert_test(a: i32, b: i32) {
-            let s = str_without3a3b(1, 2);
+            let s = str_without3a3b(a, b);
             let counts = s.chars().counts();
             assert_eq!(s.len(), (a + b) as usize);
             assert_eq!(*counts.get(&'a').unwrap_or(&0), a as usize);
             assert_eq!(*counts.get(&'b').unwrap_or(&0), b as usize);
             assert!(!s.contains("aaa"));
             assert!(!s.contains("bbb"));
+            // dbg!(&s, a, b);
         }
+
         assert_test(1,2);
         assert_test(4,1);
+        assert_test(120,75);
     }
 
-    #[test] #[ignore]
+    #[test]
     fn test_di_string_match() {
         fn assert_test(s: String) {
             let nums = di_string_match(s.clone());
+            for (pos, ch) in s.chars().enumerate() {
+                match ch {
+                    'I' => assert!(nums[pos] < nums[pos + 1]),
+                    'D' => assert!(nums[pos] > nums[pos + 1]),
+                    _ => (),
+                }
+            }
+            // dbg!(s, nums);
         }
+
         assert_test("IDID".to_string());
         assert_test("III".to_string());
         assert_test("DDI".to_string());
@@ -161,10 +260,56 @@ mod tests {
         assert_eq!(num_rabbits(vec![3,3,3,3,3]), 8);
     }
 
-    #[test] #[ignore]
+    #[test]
     fn test_maximum_swap() {
         assert_eq!(maximum_swap(2736), 7236);
         assert_eq!(maximum_swap(9973), 9973);
+        assert_eq!(maximum_swap(99699), 99996);
+        assert_eq!(maximum_swap(0), 0);
+    }
+
+    #[test] #[ignore]
+    fn test_rearrange_barcodes() {
+        fn assert_test(barcodes: Vec<i32>) {
+            let res = rearrange_barcodes(barcodes.clone());
+            let dedup = res.clone().into_iter().dedup().collect::<Vec<_>>();
+
+            assert_eq!(res.len(), dedup.len());
+            assert_eq!(res.len(), barcodes.len());
+            assert_eq!(res.iter().counts(), dedup.iter().counts());
+            assert_eq!(res.iter().counts(), barcodes.iter().counts());
+        }
+
+        assert_test(vec![1,1,1,2,2,2]);
+        assert_test(vec![1,1,1,1,2,2,3,3]);
+    }
+
+    #[test] #[ignore]
+    fn test_two_city_sched_cost() {
+        assert_eq!(two_city_sched_cost(vec![vec![10,20],vec![30,200],vec![400,50],vec![30,20]]), 110);
+        assert_eq!(two_city_sched_cost(vec![vec![259,770],vec![448,54],vec![926,667],vec![184,139],vec![840,118],vec![577,469]]), 1859);
+        assert_eq!(two_city_sched_cost(vec![vec![515,563],vec![451,713],vec![537,709],vec![343,819],vec![855,779],vec![457,60],vec![650,359],vec![631,42]]), 3086);
+    }
+
+    #[test] #[ignore]
+    fn test_longest_decomposition() {
+        assert_eq!(longest_decomposition("ghiabcdefhelloadamhelloabcdefghi".to_string()), 7);
+        assert_eq!(longest_decomposition("merchant".to_string()), 1);
+        assert_eq!(longest_decomposition("antaprezatepzapreanta".to_string()), 11);
+    }
+
+    #[test] #[ignore]
+    fn test_max_satisfaction() {
+        assert_eq!(max_satisfaction(vec![-1,-8,0,5,-9]), 14);
+        assert_eq!(max_satisfaction(vec![4,3,2]), 20);
+        assert_eq!(max_satisfaction(vec![-1,-4,-5]), 0);
+    }
+
+    #[test] #[ignore]
+    fn test_max_sum_of_squares() {
+        assert_eq!(max_sum_of_squares(2, 3), "30".to_string());
+        assert_eq!(max_sum_of_squares(2, 17), "98".to_string());
+        assert_eq!(max_sum_of_squares(1, 10), "".to_string());
     }
 
 
