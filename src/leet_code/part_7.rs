@@ -1,5 +1,5 @@
 ﻿use std::cmp::{max, min};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BinaryHeap, HashMap, HashSet};
 use itertools::Itertools;
 
 mod s460;
@@ -150,37 +150,103 @@ pub fn maximum_swap(num: i32) -> i32 {
 /// 1054. Distant Barcodes <br>
 /// https://leetcode.com/problems/distant-barcodes/
 pub fn rearrange_barcodes(barcodes: Vec<i32>) -> Vec<i32> {
-    todo!()
+    // Not BEST
+    let mut res = Vec::with_capacity(barcodes.len());
+
+    let counts = barcodes.into_iter().counts();
+    let mut heap = BinaryHeap::from_iter(counts.into_iter().map(|(item, cnt)| (cnt, item)));
+    let mut acc: Option<(usize, i32)> = None;
+
+    while let Some((cnt, item)) = heap.pop() {
+        res.push(item);
+
+        if acc.is_some() {
+            heap.push(acc.unwrap());
+        }
+
+        if cnt > 1 {
+            acc = Some((cnt-1, item));
+        }
+        else {
+            acc = None;
+        }
+    }
+
+    // Best is index+=2 for max elements
+    res
 }
 
 /// 1029. Two City Scheduling <br>
 /// https://leetcode.com/problems/two-city-scheduling/
 pub fn two_city_sched_cost(costs: Vec<Vec<i32>>) -> i32 {
-    todo!()
+    let n = costs.len();
+    costs
+        .into_iter()
+        .sorted_by_key(|ab| ab[0] - ab[1])
+        .enumerate()
+        .map(|(i, ab)| if i < n/2 {ab[0]} else {ab[1]})
+        .sum::<i32>()
 }
 
 /// 1147. Longest Chunked Palindrome Decomposition <br>
 /// https://leetcode.com/problems/longest-chunked-palindrome-decomposition/
 pub fn longest_decomposition(text: String) -> i32 {
-    todo!()
+    let mut res = 0;
+    let (mut ll, mut lr, mut rl, mut rr) =
+        (0_usize, 1_usize, text.len() - 1, text.len());
+
+    while lr <= rl {
+        if text[ll..lr] == text[rl..rr] {
+            ll = lr;
+            rr = rl;
+            res += 2;
+        }
+
+        lr += 1;
+        rl -= 1;
+    }
+
+    return res + (ll != rr) as i32;
 }
 
 /// 1402. Reducing Dishes <br>
 /// https://leetcode.com/problems/reducing-dishes/
 pub fn max_satisfaction(satisfaction: Vec<i32>) -> i32 {
-    todo!()
+    let mut res = 0;
+    let mut presum = 0;
+    for s in satisfaction.into_iter().sorted().rev() {
+        presum += s;
+        if presum.is_negative() {
+            break;
+        }
+        res += presum;
+    }
+
+    res
 }
 
 /// 3723. Maximize Sum of Squares of Digits <br>
 /// https://leetcode.com/problems/maximize-sum-of-squares-of-digits/
 pub fn max_sum_of_squares(num: i32, sum: i32) -> String {
-    todo!()
+    if num * 9 < sum {
+        return "".to_string();
+    }
+
+    let mut res = String::with_capacity(sum as usize);
+    let mut sum = sum as u32;
+
+    for _ in 0..num {
+        let digit = min(sum, 9);
+        res.push(char::from_digit(digit, 10).unwrap());
+        sum -= digit;
+    }
+
+    res
 }
 
 
 #[cfg(test)]
 mod tests {
-    use rand::Rng;
     use super::*;
 
     #[test]
@@ -268,12 +334,13 @@ mod tests {
         assert_eq!(maximum_swap(0), 0);
     }
 
-    #[test] #[ignore]
+    #[test]
     fn test_rearrange_barcodes() {
         fn assert_test(barcodes: Vec<i32>) {
             let res = rearrange_barcodes(barcodes.clone());
             let dedup = res.clone().into_iter().dedup().collect::<Vec<_>>();
 
+            // dbg!(&barcodes, &res, &dedup);
             assert_eq!(res.len(), dedup.len());
             assert_eq!(res.len(), barcodes.len());
             assert_eq!(res.iter().counts(), dedup.iter().counts());
@@ -284,28 +351,30 @@ mod tests {
         assert_test(vec![1,1,1,1,2,2,3,3]);
     }
 
-    #[test] #[ignore]
+    #[test]
     fn test_two_city_sched_cost() {
         assert_eq!(two_city_sched_cost(vec![vec![10,20],vec![30,200],vec![400,50],vec![30,20]]), 110);
         assert_eq!(two_city_sched_cost(vec![vec![259,770],vec![448,54],vec![926,667],vec![184,139],vec![840,118],vec![577,469]]), 1859);
         assert_eq!(two_city_sched_cost(vec![vec![515,563],vec![451,713],vec![537,709],vec![343,819],vec![855,779],vec![457,60],vec![650,359],vec![631,42]]), 3086);
     }
 
-    #[test] #[ignore]
+    #[test]
     fn test_longest_decomposition() {
         assert_eq!(longest_decomposition("ghiabcdefhelloadamhelloabcdefghi".to_string()), 7);
         assert_eq!(longest_decomposition("merchant".to_string()), 1);
         assert_eq!(longest_decomposition("antaprezatepzapreanta".to_string()), 11);
+        assert_eq!(longest_decomposition("ana".to_string()), 3);
+        assert_eq!(longest_decomposition("aa".to_string()), 2);
     }
 
-    #[test] #[ignore]
+    #[test]
     fn test_max_satisfaction() {
         assert_eq!(max_satisfaction(vec![-1,-8,0,5,-9]), 14);
         assert_eq!(max_satisfaction(vec![4,3,2]), 20);
         assert_eq!(max_satisfaction(vec![-1,-4,-5]), 0);
     }
 
-    #[test] #[ignore]
+    #[test]
     fn test_max_sum_of_squares() {
         assert_eq!(max_sum_of_squares(2, 3), "30".to_string());
         assert_eq!(max_sum_of_squares(2, 17), "98".to_string());
